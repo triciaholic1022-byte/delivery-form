@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>交期確認單 / Delivery Confirmation — 公信</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;font-size:14px}
+.header{background:#1F3864;color:#fff;padding:20px 24px 16px}
+.header h1{font-size:20px;font-weight:700}
+.header .sub{font-size:12px;opacity:.7;margin-top:3px}
+.meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.mg{display:flex;flex-direction:column;gap:3px}
+.mg label{font-size:11px;opacity:.65}
+.mg input{background:rgba(255,255,255,.15);border:none;border-bottom:1px solid rgba(255,255,255,.4);
+  color:#fff;font-size:13px;padding:3px 6px;width:170px;outline:none}
+.mg input::placeholder{color:rgba(255,255,255,.45)}
+
+/* Import */
+.import-box{margin:16px 16px 0;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}
+.import-hd{background:#37474F;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer;user-select:none}
+.import-hd h2{font-size:13px;font-weight:700}
+.import-hd .toggle{font-size:11px;opacity:.7}
+.import-bd{padding:14px 16px;display:none}
+.import-bd.open{display:block}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:11px;display:flex;align-items:center;gap:4px}
+.pill b{background:#fff;color:#37474F;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-size:10px}
+
+.col-guide{display:flex;margin-bottom:12px;border-radius:6px;overflow:hidden;font-size:11px}
+.ci{flex:1;text-align:center;padding:5px 2px;border-right:1px solid #fff}
+.ci:last-child{border-right:none}
+.ci .cl{font-weight:700;font-size:13px;display:block}
+.ci .cn{display:block;font-size:10px;opacity:.85;line-height:1.3}
+.c0{background:#E3F2FD;color:#0D47A1}.c1{background:#E8EAF6;color:#1A237E}
+.c2{background:#E8F5E9;color:#1B5E20}.c3{background:#FFF3E0;color:#E65100}
+.c4{background:#F3E5F5;color:#4A148C}.c5{background:#E0F7FA;color:#006064}
+.c6{background:#FFF8E1;color:#F57F17}.c7{background:#FCE4D6;color:#BF360C}
+.c8{background:#FFEBEE;color:#B71C1C}
+
+.paste-area{width:100%;min-height:72px;border:2px dashed #90A4AE;border-radius:6px;
+  padding:10px 12px;font-size:12px;color:#546E7A;resize:vertical;outline:none;
+  background:#F8FAFB;font-family:monospace;transition:.2s}
+.paste-area:focus{border-color:#1F3864;background:#fff}
+.paste-area.ok{border-color:#43A047;background:#F1F8E9;color:#2E7D32}
+.ia{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+.ia-hint{font-size:11px;color:#78909C;flex:1}
+.cb-wrap{display:flex;align-items:center;gap:5px;font-size:12px;color:#546E7A}
+
+button{padding:8px 18px;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-import{background:#1F3864;color:#fff}.btn-import:hover{background:#2E75B6}
+.btn-xlsx{background:#217346;color:#fff}.btn-xlsx:hover{background:#1a5c38}
+.btn-pdf{background:#37474F;color:#fff}.btn-pdf:hover{background:#263238}
+.btn-copy{background:#BF360C;color:#fff}.btn-copy:hover{background:#E64A19}
+.btn-sm{font-size:12px;padding:6px 12px;background:#fff;color:#546E7A;border:1.5px solid #ccc}
+.btn-sm:hover{border-color:#37474F;color:#37474F}
+
+/* Summary */
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin:14px 16px 0}
+.sc{flex:1;min-width:100px;padding:10px 12px;border-radius:8px;text-align:center}
+.sc .num{font-size:24px;font-weight:700}.sc .lbl{font-size:11px;margin-top:2px}
+.sc-ok{background:#E8F5E9;color:#1B5E20}.sc-warn{background:#FFF9C4;color:#5D4037}
+.sc-pull{background:#FFEBEE;color:#B71C1C}.sc-pend{background:#E3F2FD;color:#0D47A1}
+
+/* Table */
+.tbl-wrap{margin:14px 16px 0;overflow-x:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.09)}
+table{width:100%;border-collapse:collapse;background:#fff}
+thead tr:first-child th{background:#1F3864;color:#fff;padding:8px 10px;font-size:11px;text-align:center;white-space:nowrap}
+thead tr:last-child th{background:#37474F;color:#fff;padding:7px 8px;font-size:12px;text-align:center;white-space:nowrap}
+.th-act{background:#BF360C !important}
+td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;font-size:13px;text-align:center}
+td.tl{text-align:left} td.pn{font-size:11px;color:#777}
+tbody tr:nth-child(even){background:#FAFAFA} tbody tr:hover{background:#F1F8FF}
+.st{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap}
+.st-ok{background:#E8F5E9;color:#1B5E20}.st-warn{background:#FFF9C4;color:#5D4037}
+.st-pull{background:#FFEBEE;color:#B71C1C}.st-pend{background:#E3F2FD;color:#0D47A1}
+.dl{color:#B71C1C;font-weight:700;font-size:12px}.dok{color:#1B5E20;font-weight:700;font-size:12px}
+td.ac{background:#FFF8E1}
+td.ac input,td.ac textarea{width:100%;border:1px solid #FFB300;border-radius:4px;
+  padding:5px 7px;font-size:12px;background:#FFFDE7;color:#E65100;outline:none;font-family:Arial,sans-serif}
+td.ac input[type=date]{min-width:120px}
+td.ac textarea{resize:vertical;min-height:36px}
+td.ac input:focus,td.ac textarea:focus{border-color:#E65100;box-shadow:0 0 0 2px rgba(230,81,0,.12)}
+
+/* FCST */
+.sec-title{margin:20px 16px 0;padding:9px 14px;background:#1A7A85;color:#fff;
+  font-size:13px;font-weight:700;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:space-between}
+.sec-title small{font-weight:400;opacity:.8;font-size:11px}
+.fcst-wrap{margin:0 16px;overflow-x:auto;border-radius:0 0 8px 8px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.fcst-wrap table thead tr:first-child th{background:#1A7A85}
+.fcst-wrap table thead tr:last-child th{background:#145F68}
+.fcst-wrap td.fi{background:#D6EEF0}
+.fcst-wrap td.fi input{width:100%;border:1px solid #4AA8B4;border-radius:4px;
+  padding:5px 4px;font-size:13px;font-weight:700;background:#E8F7F8;color:#145F68;outline:none;text-align:center}
+.ft{font-weight:700;color:#1A7A85;background:#C2E5E9 !important;text-align:center}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 16px 30px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:12px 16px 0}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-ok{background:#E8F5E9;color:#1B5E20}.b-warn{background:#FFF9C4;color:#5D4037}
+.b-pull{background:#FFEBEE;color:#B71C1C}.b-pend{background:#E3F2FD;color:#0D47A1}
+@media print{.import-box,.actions,.legend{display:none}body{background:#fff}.tbl-wrap,.fcst-wrap{box-shadow:none}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>交期確認單 ／ Delivery Confirmation &amp; Pull-in Request</h1>
+  <div class="sub">請確認料品交期，如需提前請填寫右側 Pull-in 欄位後回傳 — 公信電子</div>
+  <div class="meta">
+    <div class="mg"><label>客戶名稱</label><input id="custName" type="text" placeholder="公司名稱"></div>
+    <div class="mg"><label>聯絡人</label><input id="contact" type="text" placeholder="姓名"></div>
+    <div class="mg"><label>請於此日前回傳</label><input id="deadline" type="date"></div>
+    <div class="mg"><label>發出日期</label><input id="issueDate" type="text" readonly style="opacity:.6;width:110px"></div>
+  </div>
+</div>
+
+<!-- 更新資料區（可收合） -->
+<div class="import-box">
+  <div class="import-hd" onclick="toggleImport()">
+    <h2>🔄 更新訂單資料（從 Excel 重新貼上）</h2>
+    <span class="toggle" id="toggleLabel">▼ 展開</span>
+  </div>
+  <div class="import-bd" id="importBd">
+    <div class="col-guide">
+      <div class="ci c0"><span class="cl">B</span><span class="cn">客戶料號</span></div>
+      <div class="ci c1"><span class="cl">C</span><span class="cn">製造商料號</span></div>
+      <div class="ci c2"><span class="cl">D</span><span class="cn">D/N</span></div>
+      <div class="ci c3"><span class="cl">E</span><span class="cn">品牌</span></div>
+      <div class="ci c4"><span class="cl">F</span><span class="cn">客戶PO</span></div>
+      <div class="ci c5"><span class="cl">G</span><span class="cn">下單日期</span></div>
+      <div class="ci c6"><span class="cl">H</span><span class="cn">數量(pcs)</span></div>
+      <div class="ci c7"><span class="cl">I</span><span class="cn">客戶要求交期</span></div>
+      <div class="ci c8"><span class="cl">J</span><span class="cn">原廠承諾交期</span></div>
+    </div>
+    <textarea id="pasteArea" class="paste-area"
+      placeholder="請在這裡按 Ctrl+V 貼上從 Excel 複製的資料…&#10;（選取追蹤表 B 欄到 J 欄的資料後複製）"></textarea>
+    <div class="ia">
+      <div class="cb-wrap"><input type="checkbox" id="hasHeader" checked><label for="hasHeader">第一行是標題列（自動略過）</label></div>
+      <span class="ia-hint" id="pasteHint">貼上新資料後按「匯入」即可更新表格</span>
+      <button class="btn-sm" onclick="clearPaste()">✕ 清除</button>
+      <button class="btn-import" onclick="importData()">⬇ 匯入，更新表格</button>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="badge b-ok">✅ 準時交貨</span>
+  <span class="badge b-warn">⚠️ 輕微延誤 ≤7天</span>
+  <span class="badge b-pull">🔴 建議 Pull-in &gt;7天</span>
+  <span class="badge b-pend">🔵 待確認</span>
+  <span style="font-size:11px;color:#888;align-self:center;margin-left:6px">黃底欄位請客戶填寫</span>
+</div>
+
+<div class="summary" id="summaryBar"></div>
+
+<div class="tbl-wrap"><table>
+  <thead>
+    <tr>
+      <th colspan="8">▌ 本公司提供 — Our Delivery Confirmation</th>
+      <th colspan="3" class="th-act">▌ 請客戶填寫 — Customer Action Required</th>
+    </tr>
+    <tr>
+      <th>#</th><th>客戶料號</th><th>製造商料號</th><th>D/N</th>
+      <th>數量(pcs)</th><th>客戶要求交期</th><th>本公司承諾交期</th><th>狀態 / 天數差</th>
+      <th class="th-act">希望 Pull-in 交期</th>
+      <th class="th-act">Pull-in 原因</th>
+      <th class="th-act">客戶備註</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table></div>
+
+<div class="sec-title">
+  📊 六個月預測需求 / 6-Month Forecast
+  <small>請填入各月預計採購數量（pcs），無需求填 0</small>
+</div>
+<div class="fcst-wrap"><table>
+  <thead><tr id="fcstMonthRow"></tr><tr id="fcstUnitRow"></tr></thead>
+  <tbody id="fcstBody"></tbody>
+  <tfoot><tr id="fcstFooter"></tr></tfoot>
+</table></div>
+
+<div class="actions">
+  <button class="btn-xlsx" onclick="exportExcel()">📥 匯出 Excel (.xlsx)</button>
+  <button class="btn-pdf"  onclick="window.print()">🖨️ 列印 / 匯出 PDF</button>
+  <button class="btn-copy" onclick="copyPullin()">📋 複製 Pull-in 摘要</button>
+  <button class="btn-sm"   onclick="resetAll()">🗑️ 清除填寫內容</button>
+</div>
+
+<script>
+const pad=n=>String(n).padStart(2,'0');
+const today=new Date();
+const fmt=d=>d instanceof Date&&!isNaN(d)?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`:'';
+const disp=s=>s?s.replace(/-/g,'/'):'—';
+
+document.getElementById('issueDate').value=`${today.getFullYear()}/${pad(today.getMonth()+1)}/${pad(today.getDate())}`;
+const dl=new Date(today);dl.setDate(dl.getDate()+7);
+document.getElementById('deadline').value=fmt(dl);
+
+const months=Array.from({length:6},(_,i)=>{
+  const d=new Date(today.getFullYear(),today.getMonth()+i,1);
+  return{y:d.getFullYear(),m:d.getMonth()+1,label:`${d.getFullYear()}/${pad(d.getMonth()+1)}`};
+});
+
+// ── 預載入真實訂單資料 ────────────────────────────────────────────
+let orders = [
+  {cpn:"45F347644-0M0B",mpn:"APXF250ARA470MF611",dn:"174828",brand:"NCC",po:"T421-26030021-3",qty:2000,custReq:"2026-04-17",ourProm:"2026-08-25"},
+  {cpn:"45F347644-0M0B",mpn:"APXF250ARA470MF611",dn:"174828",brand:"NCC",po:"T421-26030021-4",qty:3000,custReq:"2026-05-22",ourProm:"2026-08-25"},
+  {cpn:"45F127765-0M1B",mpn:"HHXD350ARA271MJA0G",dn:"225686",brand:"NCC",po:"T421-26010028-1",qty:500,custReq:"2026-06-05",ourProm:"2026-07-03"},
+  {cpn:"45F127765-0M1B",mpn:"HHXD350ARA271MJA0G",dn:"225686",brand:"NCC",po:"T421-26010216-1",qty:500,custReq:"2026-07-17",ourProm:"2026-07-16"},
+  {cpn:"45F127765-0M1B",mpn:"HHXD350ARA271MJA0G",dn:"225686",brand:"NCC",po:"T421-26030021-5",qty:1500,custReq:"2026-05-22",ourProm:"2026-08-25"},
+  {cpn:"45F122720-0M0B",mpn:"APXF6R3ARA221ME611",dn:"269438",brand:"NCC",po:"T421-26030223-2",qty:4000,custReq:"2026-06-01",ourProm:"2026-09-07"},
+  {cpn:"45F122720-0M0B",mpn:"APXF6R3ARA221ME611",dn:"269438",brand:"NCC",po:"T421-26030223-3",qty:4000,custReq:"2026-07-01",ourProm:"2026-09-07"},
+  {cpn:"45F122720-0M0B",mpn:"APXF6R3ARA221ME611",dn:"269438",brand:"NCC",po:"T421-26030223-4",qty:4000,custReq:"2026-08-03",ourProm:"2026-09-07"},
+  {cpn:"45F122720-0M0B",mpn:"APXF6R3ARA221ME611",dn:"269438",brand:"NCC",po:"T421-26030223-5",qty:4000,custReq:"2026-09-01",ourProm:"2026-09-07"},
+  {cpn:"45F122720-0M0B",mpn:"APXF6R3ARA221ME611",dn:"269438",brand:"NCC",po:"T421-26040067-1",qty:1000,custReq:"2026-10-01",ourProm:"2026-10-05"},
+  {cpn:"45F122720-0M0B",mpn:"APXF6R3ARA221ME611",dn:"269438",brand:"NCC",po:"T421-26040067-2",qty:4000,custReq:"2026-11-02",ourProm:"2026-10-05"},
+  {cpn:"45F322740-1M3B",mpn:"APXK6R3ARA221MF46G",dn:"",brand:"NCC",po:"T421-26030021-1",qty:2000,custReq:"2026-04-13",ourProm:"2026-09-02"},
+  {cpn:"45F310742-0M0B",mpn:"APXK160ARA101MF611",dn:"",brand:"NCC",po:"T421-26030021-2",qty:1000,custReq:"2026-05-22",ourProm:"2026-08-25"},
+  {cpn:"45F310742-0M0B",mpn:"APXK160ARA101MF611",dn:"",brand:"NCC",po:"T421-26030223-1",qty:2000,custReq:"2026-06-01",ourProm:"2026-09-02"},
+  {cpn:"45F310742-0M0B",mpn:"APXK160ARA101MF611",dn:"",brand:"NCC",po:"T421-26040067-3",qty:3000,custReq:"2026-08-03",ourProm:"2026-10-05"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26030021-6",qty:10000,custReq:"2026-07-01",ourProm:"2026-07-09"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26010028-2",qty:30000,custReq:"2026-06-01",ourProm:"2026-07-14"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26010216-2",qty:20000,custReq:"2026-04-10",ourProm:"2026-07-14"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26010216-3",qty:10000,custReq:"2026-04-10",ourProm:"2026-07-14"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26030021-7",qty:20000,custReq:"2026-05-14",ourProm:"2026-08-11"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26030021-8",qty:10000,custReq:"2026-05-22",ourProm:"2026-08-11"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26030223-6",qty:20000,custReq:"2026-07-24",ourProm:"2026-08-11"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26030223-7",qty:30000,custReq:"2026-06-25",ourProm:"2026-08-11"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26040067-4",qty:30000,custReq:"2026-08-20",ourProm:"2026-08-11"},
+  {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26040067-5",qty:10000,custReq:"2026-10-01",ourProm:"2026-08-11"},
+];
+
+function getStatus(cr,op){
+  if(!op) return{text:'🔵 待確認',cls:'st-pend',days:null};
+  const d=Math.round((new Date(op)-new Date(cr))/86400000);
+  if(d<=0) return{text:'✅ 準時',cls:'st-ok',days:d};
+  if(d<=7) return{text:'⚠️ 輕微延誤',cls:'st-warn',days:d};
+  return      {text:'🔴 建議Pull-in',cls:'st-pull',days:d};
+}
+
+function renderTable(){
+  const tb=document.getElementById('tableBody');tb.innerHTML='';
+  orders.forEach((o,i)=>{
+    const{text,cls,days}=getStatus(o.custReq,o.ourProm);
+    const dh=days===null?'':days===0?`<br><span class="dok">準時</span>`:
+      days<0?`<br><span class="dok">提前 ${Math.abs(days)} 天</span>`:
+             `<br><span class="dl">延後 ${days} 天</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="pn">${i+1}</td>
+      <td class="pn"><strong>${o.cpn}</strong></td>
+      <td class="pn">${o.mpn}</td>
+      <td class="pn">${o.dn||'—'}</td>
+      <td>${o.qty?o.qty.toLocaleString():'—'}</td>
+      <td>${disp(o.custReq)}</td>
+      <td><strong style="font-size:14px">${o.ourProm?disp(o.ourProm):'<span style="color:#90A4AE">確認中</span>'}</strong></td>
+      <td><span class="st ${cls}">${text}</span>${dh}</td>
+      <td class="ac"><input type="date" id="pi_d_${i}"></td>
+      <td class="ac"><input type="text" id="pi_r_${i}" placeholder="生產計劃 / 庫存不足…"></td>
+      <td class="ac"><textarea id="pi_n_${i}" placeholder="備註"></textarea></td>`;
+    tb.appendChild(tr);
+  });
+  updateSummary();
+}
+
+function renderFcst(){
+  const mR=document.getElementById('fcstMonthRow'),uR=document.getElementById('fcstUnitRow');
+  const bd=document.getElementById('fcstBody'),ft=document.getElementById('fcstFooter');
+  mR.innerHTML=`<th rowspan="2">#</th><th rowspan="2">客戶料號</th><th rowspan="2">製造商料號</th>`
+    +months.map(m=>`<th>${m.y}<br>/${pad(m.m)}</th>`).join('')+`<th rowspan="2">合計</th>`;
+  uR.innerHTML=months.map(()=>'<th>pcs</th>').join('');
+  bd.innerHTML='';
+  orders.forEach((o,i)=>{
+    const cells=months.map((_,j)=>`<td class="fi"><input type="number" min="0" id="f_${i}_${j}" placeholder="0" oninput="calcFcst(${i})"></td>`).join('');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="pn">${i+1}</td><td class="pn"><strong>${o.cpn}</strong></td><td class="pn">${o.mpn}</td>${cells}<td class="ft" id="ft_${i}">—</td>`;
+    bd.appendChild(tr);
+  });
+  ft.innerHTML=`<td colspan="3" style="text-align:right;font-weight:700;padding:8px 12px;background:#E0F5F7">月合計</td>`
+    +months.map((_,j)=>`<td class="ft" id="fc_${j}">—</td>`).join('')+`<td class="ft" id="fc_g">—</td>`;
+}
+
+function calcFcst(row){
+  let s=0;months.forEach((_,j)=>{s+=parseInt(document.getElementById(`f_${row}_${j}`)?.value)||0;});
+  const el=document.getElementById(`ft_${row}`);if(el)el.textContent=s?s.toLocaleString():'—';
+  let g=0;months.forEach((_,j)=>{
+    let c=0;orders.forEach((_2,i)=>{c+=parseInt(document.getElementById(`f_${i}_${j}`)?.value)||0;});
+    const ce=document.getElementById(`fc_${j}`);if(ce)ce.textContent=c?c.toLocaleString():'—';g+=c;
+  });
+  const ge=document.getElementById('fc_g');if(ge)ge.textContent=g?g.toLocaleString():'—';
+}
+
+function updateSummary(){
+  const c={ok:0,warn:0,pull:0,pend:0};
+  orders.forEach(o=>{const{cls}=getStatus(o.custReq,o.ourProm);
+    if(cls==='st-ok')c.ok++;else if(cls==='st-warn')c.warn++;
+    else if(cls==='st-pull')c.pull++;else c.pend++;});
+  document.getElementById('summaryBar').innerHTML=[
+    ['準時交貨',c.ok,'sc-ok'],['輕微延誤',c.warn,'sc-warn'],
+    ['建議Pull-in',c.pull,'sc-pull'],['待確認',c.pend,'sc-pend'],
+  ].map(([l,n,cl])=>`<div class="sc ${cl}"><div class="num">${n}</div><div class="lbl">${l}</div></div>`).join('');
+}
+
+// ── 匯入新資料 ────────────────────────────────────────────────────
+function cleanDate(s){
+  if(!s||!s.trim())return'';
+  const m=s.trim().match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  return m?`${m[1]}-${pad(m[2])}-${pad(m[3])}`:'';
+}
+document.getElementById('pasteArea').addEventListener('input',()=>{
+  const v=document.getElementById('pasteArea').value.trim();
+  const rows=v?v.split('\n').filter(r=>r.trim()):[];
+  const hint=document.getElementById('pasteHint');
+  if(!v){hint.textContent='貼上新資料後按「匯入」即可更新表格';document.getElementById('pasteArea').classList.remove('ok');return;}
+  document.getElementById('pasteArea').classList.add('ok');
+  const skip=document.getElementById('hasHeader').checked?1:0;
+  hint.textContent=`已偵測到 ${rows.length-skip} 筆資料，按「匯入」更新表格`;
+});
+function importData(){
+  const raw=document.getElementById('pasteArea').value.trim();
+  if(!raw){alert('請先貼上 Excel 資料');return;}
+  const lines=raw.split('\n').map(l=>l.replace(/\r$/,''));
+  const skip=document.getElementById('hasHeader').checked?1:0;
+  const parsed=lines.slice(skip).filter(l=>l.trim()).map(l=>{
+    const c=l.split('\t');
+    return{cpn:c[0]?.trim()||'',mpn:c[1]?.trim()||'',dn:c[2]?.trim()||'',
+      brand:c[3]?.trim()||'',po:c[4]?.trim()||'',
+      qty:parseInt(c[6])||0,custReq:cleanDate(c[7]),ourProm:cleanDate(c[8])};
+  }).filter(r=>r.cpn||r.mpn);
+  if(!parsed.length){alert('無法解析資料，請確認已選取 B～J 欄並正確複製');return;}
+  orders=parsed;
+  renderTable();renderFcst();
+  document.getElementById('pasteHint').textContent=`✅ 已匯入 ${orders.length} 筆資料`;
+}
+
+// ── 匯出 Excel ────────────────────────────────────────────────────
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const cust=document.getElementById('custName').value||'客戶';
+  const issue=document.getElementById('issueDate').value;
+  const rows1=[[`交期確認單　客戶：${cust}　發出日期：${issue}`],[],
+    ['#','客戶料號','製造商料號','D/N','品牌','數量(pcs)','客戶要求交期','本公司承諾交期','交期狀態','天數差','希望Pull-in交期','Pull-in原因','客戶備註']];
+  orders.forEach((o,i)=>{
+    const{text,days}=getStatus(o.custReq,o.ourProm);
+    rows1.push([i+1,o.cpn,o.mpn,o.dn,o.brand,o.qty||'',
+      disp(o.custReq),disp(o.ourProm),text,days!==null?days:'',
+      (document.getElementById(`pi_d_${i}`)?.value||'').replace(/-/g,'/'),
+      document.getElementById(`pi_r_${i}`)?.value||'',
+      document.getElementById(`pi_n_${i}`)?.value||'']);
+  });
+  const ws1=XLSX.utils.aoa_to_sheet(rows1);
+  ws1['!cols']=[4,16,18,8,6,8,13,13,13,7,13,18,16].map(w=>({wch:w}));
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:12}}];
+  XLSX.utils.book_append_sheet(wb,ws1,'交期確認');
+  const rows2=[[`六個月預測需求　客戶：${cust}`],[],
+    ['#','客戶料號','製造商料號',...months.map(m=>m.label),'合計']];
+  orders.forEach((o,i)=>{
+    const vals=months.map((_,j)=>parseInt(document.getElementById(`f_${i}_${j}`)?.value)||0);
+    rows2.push([i+1,o.cpn,o.mpn,...vals,vals.reduce((a,b)=>a+b,0)]);
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(rows2);
+  ws2['!cols']=[4,16,18,...months.map(()=>({wch:11})),{wch:11}].map(w=>typeof w==='number'?{wch:w}:w);
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
+  XLSX.utils.book_append_sheet(wb,ws2,'FCST');
+  XLSX.writeFile(wb,`交期確認單_${cust}_${issue.replace(/\//g,'')}.xlsx`);
+}
+
+function copyPullin(){
+  const cust=document.getElementById('custName').value||'（未填）';
+  let lines=[`Pull-in 申請摘要\n客戶：${cust}　日期：${document.getElementById('issueDate').value}\n`];
+  orders.forEach((o,i)=>{
+    const d=document.getElementById(`pi_d_${i}`)?.value;
+    const r=document.getElementById(`pi_r_${i}`)?.value;
+    const n=document.getElementById(`pi_n_${i}`)?.value;
+    if(d||r||n) lines.push(`• ${o.cpn} / ${o.mpn}\n  目前交期：${disp(o.ourProm)}　希望交期：${d?d.replace(/-/g,'/'):'未填'}\n  原因：${r||'—'}${n?`\n  備註：${n}`:''}`);
+  });
+  if(lines.length===1){alert('尚未填寫任何 Pull-in 申請');return;}
+  navigator.clipboard.writeText(lines.join('\n\n')).then(()=>alert('✅ 已複製到剪貼簿！'));
+}
+
+function toggleImport(){
+  const bd=document.getElementById('importBd');
+  const lbl=document.getElementById('toggleLabel');
+  bd.classList.toggle('open');
+  lbl.textContent=bd.classList.contains('open')?'▲ 收合':'▼ 展開';
+}
+function clearPaste(){
+  document.getElementById('pasteArea').value='';
+  document.getElementById('pasteArea').classList.remove('ok');
+  document.getElementById('pasteHint').textContent='貼上新資料後按「匯入」即可更新表格';
+}
+function resetAll(){
+  if(!confirm('確定清除所有客戶填寫內容？'))return;
+  document.querySelectorAll('[id^="pi_"],[id^="f_"]').forEach(el=>el.value='');
+  orders.forEach((_,i)=>calcFcst(i));
+}
+
+// ── 初始化 ────────────────────────────────────────────────────────
+renderTable();
+renderFcst();
+</script>
+</body>
+</html>
