@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>交期確認單 / Delivery Confirmation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;font-size:14px}
+a{color:inherit;text-decoration:none}
+
+/* ── Header ── */
+.header{background:#1F3864;color:#fff;padding:20px 28px 14px}
+.header h1{font-size:22px;font-weight:700;letter-spacing:.5px}
+.header .sub{font-size:12px;opacity:.75;margin-top:4px}
+.meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.meta label{font-size:12px;opacity:.7}
+.meta input{background:rgba(255,255,255,.15);border:none;border-bottom:1px solid rgba(255,255,255,.4);
+  color:#fff;font-size:13px;padding:2px 6px;width:180px;outline:none}
+.meta input::placeholder{color:rgba(255,255,255,.5)}
+
+/* ── Instructions ── */
+.tips{background:#fff;border-left:4px solid #37474F;margin:16px 16px 0;
+  padding:12px 16px;border-radius:0 6px 6px 0;font-size:13px;line-height:1.8;color:#444}
+.tips strong{color:#1F3864}
+
+/* ── Legend ── */
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:12px 16px 0}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+  border-radius:20px;font-size:12px;font-weight:600;cursor:default}
+.b-ok  {background:#E8F5E9;color:#1B5E20}
+.b-warn{background:#FFF9C4;color:#5D4037}
+.b-pull{background:#FFEBEE;color:#B71C1C}
+.b-pend{background:#E3F2FD;color:#0D47A1}
+
+/* ── Table wrapper ── */
+.tbl-wrap{margin:14px 16px 0;overflow-x:auto;border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1)}
+table{width:100%;border-collapse:collapse;background:#fff}
+thead tr:first-child th{background:#1F3864;color:#fff;padding:8px 10px;
+  font-size:11px;text-align:center;white-space:nowrap}
+thead tr:last-child th{background:#37474F;color:#fff;padding:7px 8px;
+  font-size:12px;text-align:center;white-space:nowrap}
+thead .th-action{background:#BF360C}
+tbody tr:nth-child(even){background:#fafafa}
+tbody tr:hover{background:#f1f8ff}
+td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle;
+  font-size:13px;text-align:center}
+td.name{text-align:left;font-weight:600}
+td.pn{font-size:11px;color:#888}
+
+/* Status badges in table */
+td .st{display:inline-block;padding:3px 9px;border-radius:12px;
+  font-size:12px;font-weight:700;white-space:nowrap}
+.st-ok  {background:#E8F5E9;color:#1B5E20}
+.st-warn{background:#FFF9C4;color:#5D4037}
+.st-pull{background:#FFEBEE;color:#B71C1C}
+.st-pend{background:#E3F2FD;color:#0D47A1}
+
+/* Days diff */
+.days-late{color:#B71C1C;font-weight:700}
+.days-ok  {color:#1B5E20;font-weight:700}
+
+/* ── Action (Pull-in) columns ── */
+td.action-cell{background:#FFF8E1}
+input[type=date],input[type=text],textarea{
+  width:100%;border:1px solid #FFB300;border-radius:4px;padding:5px 7px;
+  font-size:12px;background:#FFFDE7;color:#E65100;outline:none}
+input[type=date]:focus,input[type=text]:focus,textarea:focus{
+  border-color:#E65100;box-shadow:0 0 0 2px rgba(230,81,0,.15)}
+textarea{resize:vertical;min-height:40px;font-family:Arial,sans-serif}
+
+/* ── FCST section ── */
+.section-title{margin:20px 16px 0;padding:8px 14px;background:#1A7A85;
+  color:#fff;font-size:13px;font-weight:700;border-radius:6px 6px 0 0}
+.fcst-wrap{margin:0 16px;overflow-x:auto;border-radius:0 0 8px 8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.fcst-wrap table thead tr:first-child th{background:#1A7A85}
+.fcst-wrap table thead tr:last-child th{background:#145F68}
+.fcst-wrap td.fcst-input{background:#E0F5F7}
+.fcst-wrap input[type=number]{
+  width:100%;border:1px solid #4AA8B4;border-radius:4px;padding:5px 4px;
+  font-size:13px;font-weight:700;background:#D6EEF0;color:#145F68;
+  outline:none;text-align:center}
+.fcst-wrap input[type=number]:focus{border-color:#145F68;
+  box-shadow:0 0 0 2px rgba(20,95,104,.15)}
+.fcst-total{font-weight:700;color:#1A7A85;background:#C2E5E9!important}
+
+/* ── Buttons ── */
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 16px 24px}
+button{padding:9px 22px;border:none;border-radius:6px;font-size:13px;
+  font-weight:700;cursor:pointer;transition:.15s}
+.btn-primary{background:#1F3864;color:#fff}
+.btn-primary:hover{background:#2E75B6}
+.btn-warn{background:#BF360C;color:#fff}
+.btn-warn:hover{background:#E64A19}
+.btn-outline{background:#fff;color:#37474F;border:1.5px solid #ccc}
+.btn-outline:hover{border-color:#1F3864;color:#1F3864}
+
+/* ── Summary bar ── */
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:12px 16px 0}
+.sum-card{flex:1;min-width:110px;padding:10px 14px;border-radius:8px;text-align:center}
+.sum-card .num{font-size:26px;font-weight:700}
+.sum-card .lbl{font-size:11px;margin-top:2px;opacity:.8}
+.sc-ok  {background:#E8F5E9;color:#1B5E20}
+.sc-warn{background:#FFF9C4;color:#5D4037}
+.sc-pull{background:#FFEBEE;color:#B71C1C}
+.sc-pend{background:#E3F2FD;color:#0D47A1}
+
+/* ── Print ── */
+@media print{
+  body{background:#fff}
+  .actions,.tips button{display:none}
+  .tbl-wrap,.fcst-wrap{box-shadow:none}
+  input,textarea{border:1px solid #ccc!important;background:#fff!important}
+}
+@media(max-width:600px){
+  .header h1{font-size:17px}
+  .meta{flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <h1>交期確認單 ／ Delivery Confirmation &amp; Pull-in Request</h1>
+  <div class="sub">請確認下列料品交期，如需提前請填寫 Pull-in 申請欄位後回傳</div>
+  <div class="meta">
+    <div><label>客戶名稱</label><br><input id="custName" type="text" placeholder="請填入公司名稱"></div>
+    <div><label>聯絡人</label><br><input id="contact" type="text" placeholder="姓名"></div>
+    <div><label>回傳期限</label><br><input id="deadline" type="date"></div>
+    <div><label>發出日期</label><br><input id="issueDate" type="text" readonly style="opacity:.7"></div>
+  </div>
+</div>
+
+<!-- ── SUMMARY CARDS ── -->
+<div class="summary" id="summaryBar"></div>
+
+<!-- ── LEGEND ── -->
+<div class="legend">
+  <span class="badge b-ok">✅ 準時交貨</span>
+  <span class="badge b-warn">⚠️ 輕微延誤 ≤7天</span>
+  <span class="badge b-pull">🔴 建議 Pull-in &gt;7天</span>
+  <span class="badge b-pend">🔵 待確認</span>
+  <span style="font-size:12px;color:#888;align-self:center">　黃色欄位為請您填寫的區域</span>
+</div>
+
+<!-- ── MAIN TABLE ── -->
+<div class="tbl-wrap">
+<table id="mainTable">
+  <thead>
+    <tr>
+      <th colspan="7">▌ 本公司提供 — Our Delivery Confirmation</th>
+      <th colspan="3" class="th-action">▌ 請客戶填寫 — Customer Action Required</th>
+    </tr>
+    <tr>
+      <th>客戶料號</th><th>製造商料號</th><th>品名 / 規格</th>
+      <th>數量 (pcs)</th><th>您的要求交期</th>
+      <th>本公司承諾交期</th><th>狀態 / 提前或延後</th>
+      <th class="th-action">希望 Pull-in 交期</th>
+      <th class="th-action">Pull-in 原因</th>
+      <th class="th-action">備註</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+</div>
+
+<!-- ── FCST TABLE ── -->
+<div class="section-title">📊 六個月預測需求 / 6-Month Forecast　　<small style="font-weight:400;opacity:.8">請填入各月預計採購數量（pcs），無需求填 0</small></div>
+<div class="fcst-wrap">
+<table id="fcstTable">
+  <thead>
+    <tr id="fcstMonthRow"></tr>
+    <tr id="fcstLabelRow"></tr>
+  </thead>
+  <tbody id="fcstBody"></tbody>
+  <tfoot><tr id="fcstTotal"></tr></tfoot>
+</table>
+</div>
+
+<!-- ── ACTIONS ── -->
+<div class="actions">
+  <button class="btn-primary" onclick="window.print()">🖨️ 列印 / 匯出PDF</button>
+  <button class="btn-warn" onclick="copyPullin()">📋 複製 Pull-in 申請摘要</button>
+  <button class="btn-outline" onclick="clearInputs()">🗑️ 清除填寫內容</button>
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────
+const today = new Date();
+const fmtDate = d => d ? d.toISOString().slice(0,10) : '';
+document.getElementById('issueDate').value = fmtDate(today);
+
+// Set default deadline to 5 business days
+const dl = new Date(today); dl.setDate(dl.getDate()+7);
+document.getElementById('deadline').value = fmtDate(dl);
+
+const orders = [
+  {cpn:"CPN-001", mpn:"TI-SN74HC245N", name:"八位元緩衝器",          qty:500,  custReq:"2026-05-10", ourProm:"2026-05-08"},
+  {cpn:"CPN-002", mpn:"STM32F103C8T6", name:"32位元微控制器 MCU",    qty:200,  custReq:"2026-05-20", ourProm:"2026-05-30"},
+  {cpn:"CPN-003", mpn:"IRFZ44NPBF",    name:"N通道功率MOSFET",        qty:1000, custReq:"2026-04-30", ourProm:"2026-04-28"},
+  {cpn:"CPN-004", mpn:"LM358DR2G",     name:"雙運算放大器",           qty:800,  custReq:"2026-06-01", ourProm:""},
+  {cpn:"CPN-005", mpn:"ATMEGA328P-PU", name:"8位元AVR微控制器",       qty:150,  custReq:"2026-05-15", ourProm:"2026-06-05"},
+];
+
+const months = Array.from({length:6}, (_,i)=>{
+  const d = new Date(today.getFullYear(), today.getMonth()+i, 1);
+  return {y:d.getFullYear(), m:d.getMonth()+1,
+          label:`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}`};
+});
+
+// ── Status logic ─────────────────────────────────────────────────
+function getStatus(custReq, ourProm){
+  if(!ourProm) return {text:"🔵 待確認", cls:"st-pend", days:null};
+  const diff = (new Date(ourProm)-new Date(custReq))/(1000*86400);
+  if(diff<=0) return {text:"✅ 準時交貨", cls:"st-ok",   days:diff};
+  if(diff<=7) return {text:"⚠️ 輕微延誤", cls:"st-warn", days:diff};
+  return       {text:"🔴 建議Pull-in",   cls:"st-pull", days:diff};
+}
+
+// ── Build main table ──────────────────────────────────────────────
+const tbody = document.getElementById('tableBody');
+orders.forEach((o,i)=>{
+  const {text,cls,days} = getStatus(o.custReq, o.ourProm);
+  const daysHtml = days===null ? '—'
+    : days===0 ? '<span class="days-ok">準時</span>'
+    : days<0   ? `<span class="days-ok">提前 ${Math.abs(days)} 天</span>`
+    :             `<span class="days-late">延後 ${days} 天</span>`;
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="pn">${o.cpn}</td>
+    <td class="pn">${o.mpn}</td>
+    <td class="name">${o.name}</td>
+    <td>${o.qty.toLocaleString()}</td>
+    <td>${o.custReq||'—'}</td>
+    <td><strong>${o.ourProm||'確認中'}</strong></td>
+    <td><span class="st ${cls}">${text}</span><br><small>${daysHtml}</small></td>
+    <td class="action-cell"><input type="date" id="pi_date_${i}" oninput="updateSummary()"></td>
+    <td class="action-cell"><input type="text" id="pi_reason_${i}" placeholder="生產計劃/庫存不足…"></td>
+    <td class="action-cell"><textarea id="pi_note_${i}" placeholder="備註"></textarea></td>`;
+  tbody.appendChild(tr);
+});
+
+// ── Build FCST table ──────────────────────────────────────────────
+const mRow = document.getElementById('fcstMonthRow');
+const lRow = document.getElementById('fcstLabelRow');
+const fBody = document.getElementById('fcstBody');
+const fTotal= document.getElementById('fcstTotal');
+
+// Header
+mRow.innerHTML = `<th rowspan="2">客戶料號</th><th rowspan="2">品名</th>`
+  + months.map(m=>`<th>${m.y}<br>/${String(m.m).padStart(2,'0')}</th>`).join('')
+  + `<th rowspan="2">合計</th>`;
+lRow.innerHTML = months.map(()=>`<th class="th-action">pcs</th>`).join('');
+
+orders.forEach((o,i)=>{
+  const tr = document.createElement('tr');
+  const inputs = months.map((_,j)=>
+    `<td class="fcst-input"><input type="number" min="0" id="f_${i}_${j}" placeholder="0" oninput="calcFcst(${i})"></td>`
+  ).join('');
+  tr.innerHTML = `<td class="pn">${o.cpn}</td><td class="name">${o.name}</td>${inputs}<td class="fcst-total" id="ft_${i}">—</td>`;
+  fBody.appendChild(tr);
+});
+
+// Footer totals
+fTotal.innerHTML = `<td colspan="2" style="text-align:right;font-weight:700;padding:8px 10px">月合計</td>`
+  + months.map((_,j)=>`<td class="fcst-total" id="fc_${j}">—</td>`).join('')
+  + `<td class="fcst-total" id="fc_grand">—</td>`;
+
+function calcFcst(row){
+  let rowSum=0;
+  months.forEach((_,j)=>{
+    const v=parseInt(document.getElementById(`f_${row}_${j}`)?.value)||0;
+    rowSum+=v;
+  });
+  const el=document.getElementById(`ft_${row}`);
+  if(el) el.textContent = rowSum?rowSum.toLocaleString():'—';
+  // col totals
+  let grand=0;
+  months.forEach((_,j)=>{
+    let col=0;
+    orders.forEach((_2,i)=>{ col+=parseInt(document.getElementById(`f_${i}_${j}`)?.value)||0; });
+    const ce=document.getElementById(`fc_${j}`);
+    if(ce) ce.textContent=col?col.toLocaleString():'—';
+    grand+=col;
+  });
+  const ge=document.getElementById('fc_grand');
+  if(ge) ge.textContent=grand?grand.toLocaleString():'—';
+}
+
+// ── Summary cards ─────────────────────────────────────────────────
+function updateSummary(){
+  const counts={ok:0,warn:0,pull:0,pend:0};
+  orders.forEach(o=>{
+    const {cls}=getStatus(o.custReq,o.ourProm);
+    if(cls==='st-ok')   counts.ok++;
+    else if(cls==='st-warn') counts.warn++;
+    else if(cls==='st-pull') counts.pull++;
+    else counts.pend++;
+  });
+  document.getElementById('summaryBar').innerHTML = [
+    ['準時交貨', counts.ok,   'sc-ok'],
+    ['輕微延誤', counts.warn, 'sc-warn'],
+    ['建議Pull-in',counts.pull,'sc-pull'],
+    ['待確認',   counts.pend, 'sc-pend'],
+  ].map(([l,n,c])=>`<div class="sum-card ${c}"><div class="num">${n}</div><div class="lbl">${l}</div></div>`).join('');
+}
+updateSummary();
+
+// ── Copy pull-in summary ──────────────────────────────────────────
+function copyPullin(){
+  const cust = document.getElementById('custName').value||'（未填）';
+  let lines = [`交期確認單 Pull-in 申請摘要\n客戶：${cust}　日期：${fmtDate(today)}\n`];
+  orders.forEach((o,i)=>{
+    const d=document.getElementById(`pi_date_${i}`)?.value;
+    const r=document.getElementById(`pi_reason_${i}`)?.value;
+    if(d||r) lines.push(`• ${o.cpn} ${o.name}\n  希望交期：${d||'未填'}　原因：${r||'未填'}`);
+  });
+  if(lines.length===1){ alert('尚未填寫任何 Pull-in 申請'); return; }
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('已複製到剪貼簿！'));
+}
+
+function clearInputs(){
+  if(!confirm('確定清除所有填寫內容？')) return;
+  document.querySelectorAll('input[type=date]:not(#deadline):not(#issueDate),input[type=text]:not(#custName):not(#contact),textarea').forEach(el=>el.value='');
+  document.querySelectorAll('input[type=number]').forEach(el=>el.value='');
+  orders.forEach((_,i)=>calcFcst(i));
+}
+</script>
+</body>
+</html>
