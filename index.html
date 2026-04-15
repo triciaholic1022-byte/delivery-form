@@ -101,7 +101,10 @@ td.ac input:focus,td.ac textarea:focus{border-color:#E65100;box-shadow:0 0 0 2px
 .badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
 .b-ok{background:#E8F5E9;color:#1B5E20}.b-warn{background:#FFF9C4;color:#5D4037}
 .b-pull{background:#FFEBEE;color:#B71C1C}.b-pend{background:#E3F2FD;color:#0D47A1}
-@media print{.import-box,.actions,.legend{display:none}body{background:#fff}.tbl-wrap,.fcst-wrap{box-shadow:none}}
+.pend-btn{margin-top:4px;padding:2px 8px;font-size:10px;border:1.5px solid #90CAF9;border-radius:10px;background:#E3F2FD;color:#1565C0;cursor:pointer;font-weight:600;white-space:nowrap;transition:.15s}
+.pend-btn:hover{background:#BBDEFB;border-color:#1565C0}
+.pend-btn.pend-on{background:#1565C0;color:#fff;border-color:#0D47A1}
+@media print{.import-box,.actions,.legend{display:none}body{background:#fff}.tbl-wrap,.fcst-wrap{box-shadow:none}.pend-btn{display:none}}
 </style>
 </head>
 <body>
@@ -240,7 +243,11 @@ let orders = [
   {cpn:"45F333740-4M4B",mpn:"6VHV330MC6",dn:"",brand:"NCC",po:"T421-26040067-5",qty:10000,custReq:"2026-10-01",ourProm:"2026-08-11"},
 ];
 
-function getStatus(cr,op){
+// pendingOverride[i] = true 表示手動標為待確認
+const pendingOverride=[];
+
+function getStatus(cr,op,idx){
+  if(pendingOverride[idx]) return{text:'🔵 待確認',cls:'st-pend',days:null};
   if(!op) return{text:'🔵 待確認',cls:'st-pend',days:null};
   const d=Math.round((new Date(op)-new Date(cr))/86400000);
   if(d<=0) return{text:'✅ 準時',cls:'st-ok',days:d};
@@ -248,13 +255,26 @@ function getStatus(cr,op){
   return      {text:'🔴 建議Pull-in',cls:'st-pull',days:d};
 }
 
+function togglePend(i){
+  pendingOverride[i]=!pendingOverride[i];
+  const o=orders[i];
+  const{text,cls,days}=getStatus(o.custReq,o.ourProm,i);
+  const dh=days===null?'':days===0?`<br><span class="dok">準時</span>`:
+    days<0?`<br><span class="dok">提前 ${Math.abs(days)} 天</span>`:
+           `<span class="dl"> 延後 ${days} 天</span>`;
+  const cell=document.getElementById('st_'+i);
+  if(cell) cell.innerHTML=`<span class="st ${cls}">${text}</span>${dh}<br><button class="pend-btn${pendingOverride[i]?' pend-on':''}" onclick="togglePend(${i})">${pendingOverride[i]?'↩ 取消待確認':'🔵 標為待確認'}</button>`;
+  updateSummary();
+}
+
 function renderTable(){
   const tb=document.getElementById('tableBody');tb.innerHTML='';
   orders.forEach((o,i)=>{
-    const{text,cls,days}=getStatus(o.custReq,o.ourProm);
+    if(pendingOverride[i]===undefined) pendingOverride[i]=false;
+    const{text,cls,days}=getStatus(o.custReq,o.ourProm,i);
     const dh=days===null?'':days===0?`<br><span class="dok">準時</span>`:
       days<0?`<br><span class="dok">提前 ${Math.abs(days)} 天</span>`:
-             `<br><span class="dl">延後 ${days} 天</span>`;
+             `<span class="dl"> 延後 ${days} 天</span>`;
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td class="pn">${i+1}</td>
@@ -264,7 +284,7 @@ function renderTable(){
       <td>${o.qty?o.qty.toLocaleString():'—'}</td>
       <td>${disp(o.custReq)}</td>
       <td><strong style="font-size:14px">${o.ourProm?disp(o.ourProm):'<span style="color:#90A4AE">確認中</span>'}</strong></td>
-      <td><span class="st ${cls}">${text}</span>${dh}</td>
+      <td id="st_${i}"><span class="st ${cls}">${text}</span>${dh}<br><button class="pend-btn${pendingOverride[i]?' pend-on':''}" onclick="togglePend(${i})">${pendingOverride[i]?'↩ 取消待確認':'🔵 標為待確認'}</button></td>
       <td class="ac"><input type="date" id="pi_d_${i}"></td>
       <td class="ac"><input type="text" id="pi_r_${i}" placeholder="生產計劃 / 庫存不足…"></td>
       <td class="ac"><textarea id="pi_n_${i}" placeholder="備註"></textarea></td>`;
@@ -316,7 +336,7 @@ function calcFcst(row){
 
 function updateSummary(){
   const c={ok:0,warn:0,pull:0,pend:0};
-  orders.forEach(o=>{const{cls}=getStatus(o.custReq,o.ourProm);
+  orders.forEach((o,i)=>{const{cls}=getStatus(o.custReq,o.ourProm,i);
     if(cls==='st-ok')c.ok++;else if(cls==='st-warn')c.warn++;
     else if(cls==='st-pull')c.pull++;else c.pend++;});
   document.getElementById('summaryBar').innerHTML=[
